@@ -5,6 +5,15 @@
   "main": "./bundled/index.js",
   "bin": "./bundled/cli.js",
   "types": "./bundled/index.d.ts",
+  "author": "@zaripych",
+  "license": "MIT",
+  "keywords": [
+    "qrcode",
+    "ffmpeg",
+    "camera",
+    "decode",
+    "TypeScript"
+  ],
   "files": [
     "bundled",
     "README.md"
@@ -26,8 +35,6 @@
     "prepublishOnly": "yarn run check && yarn declarations && yarn rollup -c -m && cp ./lib/index.d.ts ./bundled/index.d.ts && cp ./src/cli.js ./bundled/cli.js",
     "release": "semantic-release"
   },
-  "author": "@zaripych",
-  "license": "MIT",
   "husky": {
     "hooks": {
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
