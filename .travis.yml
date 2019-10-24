@@ -18,6 +18,7 @@ jobs:
         - time yarn run check
         - time yarn declarations
         - time yarn rollup -c -m
+        - time yarn release --dry-run
       deploy:
         provider: script
         script:
