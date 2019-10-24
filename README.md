@@ -19,6 +19,14 @@ Supported platforms:
 
 - ffmpeg in PATH
 
+Can be simply downloaded:
+
+```
+npx ffbinaries ffmpeg
+```
+
 ## Usage
 
+```
 npx qrcode-camera-decode
+```

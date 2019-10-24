@@ -1,7 +1,7 @@
 {
   "name": "qrcode-camera-decode",
   "version": "1.0.0",
-  "description": "Captures QR code from your camera",
+  "description": "CLI tool to capture QR code from your camera",
   "main": "./bundled/index.js",
   "bin": "./bundled/cli.js",
   "types": "./bundled/index.d.ts",
