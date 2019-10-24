@@ -1,0 +1,28 @@
+language: node_js
+cache:
+  yarn: true
+  directories:
+    - node_modules
+node_js:
+  - '10'
+if: tag IS blank
+before_install:
+  - curl -o- -L https://yarnpkg.com/install.sh | bash
+  - export PATH="$HOME/.yarn/bin:$PATH"
+stages:
+  - name: test, build and publish
+jobs:
+  include:
+    - stage: test, build and publish
+      script:
+        - time yarn run check
+        - time yarn declarations
+        - time yarn rollup -c -m
+      deploy:
+        provider: script
+        script:
+          - yarn release
+        skip_cleanup: true
+        on:
+          all_branches: true
+          condition: $TRAVIS_BRANCH =~ ^(master|alpha|beta|[0-9]+\.x$|[0-9]+\.x\.x$|[0-9]+\.[0-9]+\.x)$
