@@ -1,0 +1,10 @@
+{
+  "extends": "./node_modules/ts-deps/lib/config/tsconfig.default.json",
+  "compilerOptions": {
+    "module": "es2015",
+    "baseUrl": ".",
+    "outDir": "lib",
+    "noEmit": false
+  },
+  "include": ["src"]
+}

@@ -1,0 +1,52 @@
+{
+  "name": "qrcode-camera-decode",
+  "version": "1.0.0",
+  "description": "Captures QR code from your camera",
+  "main": "./bundled/index.js",
+  "bin": "./bundled/cli.js",
+  "types": "./bundled/index.d.ts",
+  "files": [
+    "bundled",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "jest --color",
+    "init": "ts-deps init",
+    "build": "node ./scripts/build.js -s",
+    "build:watch": "node ./scripts/build.js -s --watch",
+    "declarations": "tsc -p ./tsconfig.declarations.json",
+    "prebuild": "node ./scripts/clean.js",
+    "clean": "node ./scripts/clean.js",
+    "integration": "jest --config ./jest.config.integration.js --color -i",
+    "combine-coverage": "node ./scripts/combineCoverage.js",
+    "type-check": "tsc",
+    "lint": "tslint -p . -t verbose",
+    "check": "concurrently \"node ./scripts/build.js\" \"tsc\" \"tslint -p . -t verbose\"",
+    "patch": "ts-deps patch",
+    "prepublishOnly": "yarn run check && yarn declarations && yarn rollup -c -m && cp ./lib/index.d.ts ./bundled/index.d.ts && cp ./src/cli.js ./bundled/cli.js",
+    "release": "semantic-release"
+  },
+  "author": "@zaripych",
+  "license": "MIT",
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "pre-commit": "pretty-quick --staged",
+      "pre-push": "npm run check"
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "jsqr": "1.2.0",
+    "rxjs": "6.5.3",
+    "yargs": "14.2.0",
+    "@types/node": "10",
+    "@types/yargs": "13.0.3",
+    "husky": "3.0.9",
+    "rollup": "1.25.2",
+    "rollup-plugin-commonjs": "10.1.0",
+    "rollup-plugin-node-resolve": "5.2.0",
+    "rollup-plugin-babel": "4.3.3",
+    "ts-deps": "0.5.0"
+  }
+}
