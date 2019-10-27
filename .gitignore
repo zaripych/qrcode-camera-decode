@@ -1,10 +1,11 @@
-coverage
-coverage-*
-lib
-node_modules
+.DS_Store
 .jest-cache
-yarn-error.log
-package
 .pnp
 bundled
+coverage
+coverage-*
 ffmpeg
+lib
+node_modules
+package
+yarn-error.log
