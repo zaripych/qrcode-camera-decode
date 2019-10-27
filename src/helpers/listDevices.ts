@@ -14,7 +14,7 @@ function extractDirectShowVideoDevices(ffmpegOutput: string) {
 function extractAVFoundationVideoDevices(ffmpegOutput: string) {
   const delimiterStart = 'AVFoundation video devices:';
   const delimiterEnd = 'AVFoundation audio devices:';
-  const regex = /^\[[^\[\]]+\]\s+\[\d+\]\s+(.+)\s*$/gm;
+  const regex = /^\[[^\[\]]+\]\s+\[(\d+)\]\s+(.+)\s*$/gm;
 
   return extractDevicesList(ffmpegOutput, regex, delimiterStart, delimiterEnd);
 }
@@ -40,12 +40,13 @@ export async function listAvailableVideoDevices(
   if (process.platform === 'win32' || process.platform === 'darwin') {
     const result = await spawnOutput(
       {
+        allowedExitCodes: [0, 1],
         executable: tools.ffmpegPath,
         arguments: [
           '-list_devices',
           'true',
           '-f',
-          process.platform === 'win32' ? 'dshow' : 'darwin',
+          process.platform === 'win32' ? 'dshow' : 'avfoundation',
           '-i',
           'dummy',
         ],

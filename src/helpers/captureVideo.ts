@@ -16,22 +16,32 @@ interface IVideoCaptureOpts {
   rate: number;
   ffmpegPath: string;
   ffmpegInputArgs?: string[];
+  ffmpegOutputArgs?: string[];
   verbosity?: 0 | 1 | 2;
 }
 
 export function captureVideo(optsRaw: IVideoCaptureOpts) {
   return new Observable<Buffer>(subscriber => {
     const opts = {
-      verbosity: 0,
+      verbosity: 0 as const,
       ...optsRaw,
     };
 
     const inputArgs =
-      opts.ffmpegInputArgs || determinePlatformSpecificInputArguments(optsRaw);
+      opts.ffmpegInputArgs ||
+      determinePlatformSpecificInputArguments({
+        device: opts.device,
+        input: opts.input,
+        size: {
+          width: opts.width,
+          height: opts.height,
+        },
+        rate: opts.rate,
+      });
 
     const [pixelFormat, bytesPerPixel] = ['rgba', 4];
 
-    const outputArgs = [
+    const outputArgs = opts.ffmpegOutputArgs || [
       '-f',
       'image2pipe',
       '-s',
@@ -45,9 +55,40 @@ export function captureVideo(optsRaw: IVideoCaptureOpts) {
       'pipe:1',
     ];
 
+    const videoOutput = captureVideoCore({
+      ffmpegPath: opts.ffmpegPath,
+      ffmpegInputArgs: inputArgs,
+      ffmpegOutputArgs: outputArgs,
+      verbosity: opts.verbosity,
+    }).pipe(
+      formFrames({
+        width: opts.width,
+        height: opts.height,
+        bytesPerPixel,
+      })
+    );
+
+    subscriber.add(videoOutput.subscribe(subscriber));
+  });
+}
+
+interface IVideoCaptureCoreOpts {
+  ffmpegPath: string;
+  ffmpegInputArgs: string[];
+  ffmpegOutputArgs: string[];
+  verbosity?: 0 | 1 | 2;
+}
+
+export function captureVideoCore(optsRaw: IVideoCaptureCoreOpts) {
+  return new Observable<Buffer>(subscriber => {
+    const opts = {
+      verbosity: 0,
+      ...optsRaw,
+    };
+
     const ffmpeg = spawnWithLogging({
       executable: opts.ffmpegPath,
-      arguments: [...inputArgs, ...outputArgs],
+      arguments: [...opts.ffmpegInputArgs, ...opts.ffmpegOutputArgs],
       allowedExitCodes: [0, 255],
 
       error: subscriber.error.bind(subscriber),
@@ -59,13 +100,7 @@ export function captureVideo(optsRaw: IVideoCaptureOpts) {
       ].filter(isTruthy),
     });
 
-    const videoOutput = readableToObservable(ffmpeg.stdout).pipe(
-      formFrames({
-        width: opts.width,
-        height: opts.height,
-        bytesPerPixel,
-      })
-    );
+    const videoOutput = readableToObservable(ffmpeg.stdout);
 
     subscriber.add(videoOutput.subscribe(subscriber));
     subscriber.add(() => {
@@ -74,57 +109,39 @@ export function captureVideo(optsRaw: IVideoCaptureOpts) {
   });
 }
 
-function determinePlatformSpecificInputArguments(opts: IVideoCaptureOpts) {
+function determinePlatformSpecificInputArguments(opts: {
+  device?: string;
+  input: string;
+  size?: {
+    width: number;
+    height: number;
+  };
+  rate?: number;
+}) {
+  function inputCaps(rateOpt = '-framerate', sizeOpt = '-video_size') {
+    const rateOpts =
+      (typeof opts.rate === 'number' && [rateOpt, opts.rate.toFixed(0)]) || [];
+    const sizeOpts =
+      (opts.size && [sizeOpt, `${opts.size.width}x${opts.size.height}`]) || [];
+    return [...rateOpts, ...sizeOpts];
+  }
+
+  const formatOpts = inputCaps();
+
   if (opts.device) {
-    return [
-      '-f',
-      opts.device,
-      '-framerate',
-      opts.rate.toFixed(0),
-      '-s',
-      `${opts.width}x${opts.height}`,
-      '-i',
-      opts.input,
-    ];
+    return ['-f', opts.device, ...formatOpts, '-i', opts.input];
   }
 
   if (process.platform === 'win32') {
-    return [
-      '-f',
-      'dshow',
-      `-framerate`,
-      opts.rate.toFixed(0),
-      '-video_size',
-      `${opts.width}x${opts.height}`,
-      '-i',
-      `video=${opts.input}`,
-    ];
+    return ['-f', 'dshow', ...formatOpts, '-i', `video=${opts.input}`];
   }
 
   if (process.platform === 'darwin') {
-    return [
-      '-f',
-      'avfoundation',
-      '-framerate',
-      opts.rate.toFixed(0),
-      '-s',
-      `${opts.width}x${opts.height}`,
-      '-i',
-      `${opts.input}:`,
-    ];
+    return ['-f', 'avfoundation', ...formatOpts, '-i', `${opts.input}:`];
   }
 
   if (process.platform === 'linux') {
-    return [
-      '-f',
-      'v4l2',
-      '-framerate',
-      opts.rate.toFixed(0),
-      '-s',
-      `${opts.width}x${opts.height}`,
-      '-i',
-      opts.input,
-    ];
+    return ['-f', 'v4l2', ...formatOpts, '-i', opts.input];
   }
 
   throw new Error(
